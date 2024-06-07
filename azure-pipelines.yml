@@ -63,14 +63,6 @@ stages:
         git clone --branch feature/api-gateway https://$(GITHUB_TOKEN)@github.com/ddn-automatization/ecommerce-iac.git
         cd ecommerce-iac/api-gateway/ecommerce-k8s
         sed -i 's/image: acrk8sprojectecommerce.azurecr.io\/ecommerce-admin:.*/image: acrk8sprojectecommerce.azurecr.io\/ecommerce-admin:$(tag)/' ecommerce-admin.yaml
-        git config --global user.email "Danirg2222@outlook.es"
-        git config --global user.name "DanielRamirez1901"
-        git checkout -b feature/update-image
-        git stash
-        git pull --rebase origin feature/update-image
-        git stash pop
-        git commit -am "Update Docker image to $(tag)"
-        git push origin feature/update-image
       displayName: Clone repository and update YAML
 
     - task: AzureCLI@2
