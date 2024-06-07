@@ -60,8 +60,7 @@ stages:
       displayName: Install Git
 
     - script: |
-        git clone https://$(GITHUB_TOKEN)@github.com/ddn-automatization/ecommerce-iac.git
-        git checkout feature/api-gateway
+        git clone --branch feature/api-gateway https://$(GITHUB_TOKEN)@github.com/ddn-automatization/ecommerce-iac.git
         cd ecommerce-iac/api-gateway/ecommerce-k8s
         sed -i 's/image: acrk8sprojectecommerce.azurecr.io\/ecommerce-admin:.*/image: acrk8sprojectecommerce.azurecr.io\/ecommerce-admin:$(tag)/' ecommerce-admin.yaml
         git config --global user.email "Danirg2222@outlook.es"
