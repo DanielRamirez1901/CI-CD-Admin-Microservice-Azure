@@ -28,7 +28,7 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      name: mypcagent  # Specifying the self-hosted agent pool here
+      name: linuxagent  # Cambiar a 'linuxagent' o el nombre correcto de tu pool
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
@@ -52,7 +52,7 @@ stages:
   - job: Deploy
     displayName: Deploy
     pool:
-      name: linuxagent  # Specifying the self-hosted agent pool here
+      name: linuxagent  # Cambiar a 'linuxagent' o el nombre correcto de tu pool
     steps:
     - script: |
         sudo apt-get update
