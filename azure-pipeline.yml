@@ -1,0 +1,72 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+pr:
+- main
+
+resources:
+- repo: self
+
+variables:
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      displayName: Build and push image to ACR
+      inputs:
+        containerRegistry: 'ddncr'
+        repository: 'ecommerce-admin'
+        command: 'build'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          $(tag)
+          latest
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'ddncr'
+        repository: 'ecommerce-admin'
+        command: 'push'
+        tags: |
+          $(tag)
+          latest
+
+- stage: Deploy
+  displayName: Deploy
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - script: |
+        sudo apt-get update
+        sudo apt-get install -y git
+      displayName: Install Git
+    - script: |
+        git clone https://$(GITHUB_TOKEN)@github.com/ddn-automatization/ecommerce-k8s
+        cd ecommerce-k8s
+        sed -i 's/image: ddncr.azurecr.io\/ecommerce-admin:latest/image: ddncr.azurecr.io\/ecommerce-admin:$(tag)/' ecommerce-deployment.yaml
+      displayName: Clone repository and modify file
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'Azure para estudiantes(c2b81daf-f6f7-43a0-957b-b330db4beee6)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az aks get-credentials --resource-group ddn-infra-rg --name ddn-infra-aks1
+          kubectl apply -f ecommerce-k8s/ecommerce-deployment.yaml
+      displayName: Deploy to AKS
