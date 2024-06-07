@@ -52,7 +52,7 @@ stages:
   - job: Deploy
     displayName: Deploy
     pool:
-      name: mypcagent  # Specifying the self-hosted agent pool here
+      name: linuxagent  # Specifying the self-hosted agent pool here
     steps:
     - script: |
         sudo apt-get update
