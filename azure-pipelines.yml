@@ -66,6 +66,7 @@ stages:
         git config --global user.email "Danirg2222@outlook.es"
         git config --global user.name "DanielRamirez1901"
         git checkout -b feature/update-image
+        git pull --rebase origin feature/update-image
         git commit -am "Update Docker image to $(tag)"
         git push origin feature/update-image
       displayName: Clone repository and update YAML
