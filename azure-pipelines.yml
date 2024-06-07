@@ -73,7 +73,7 @@ stages:
 
     - task: AzureCLI@2
       inputs:
-        azureSubscription: 'Azure para estudiantes(c767cbb2-4029-465b-ad2c-087472194b4b)'
+        azureSubscription: 'azure-students'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
