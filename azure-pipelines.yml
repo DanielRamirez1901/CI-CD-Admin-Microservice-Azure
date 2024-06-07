@@ -1,0 +1,81 @@
+# Deploy to Azure Kubernetes Service
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'b19353f1-80d5-40b4-abbe-3f3da4309b54'
+  imageRepository: 'ecommerceadmin'
+  containerRegistry: 'acrk8sprojectecommerce.azurecr.io'
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildId)'
+  imagePullSecret: 'acrk8sprojectecommerce194d-auth'
+
+  # Name of the new namespace being created to deploy the PR changes.
+  k8sNamespaceForPR: 'review-app-$(System.PullRequest.PullRequestId)'
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: mypcagent  # Specifying the self-hosted agent pool here
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+    - upload: manifests
+      artifact: manifests
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    pool:
+      name: mypcagent  # Specifying the self-hosted agent pool here
+    steps:
+    - script: |
+        sudo apt-get update
+        sudo apt-get install -y git
+      displayName: Install Git
+
+    - script: |
+        git clone https://$(GITHUB_TOKEN)@github.com/ddn-automatization/ecommerce-iac.git
+        cd ecommerce-iac/api-gateway/ecommerce-k8s
+        sed -i 's/image: ventana1901\/ecommerce-admin:.*/image: ventana1901\/ecommerce-admin:$(tag)/' ecommerce-admin.yaml
+        git config --global user.email "you@example.com"
+        git config --global user.name "Your Name"
+        git checkout -b feature/update-image
+        git commit -am "Update Docker image to $(tag)"
+        git push origin feature/update-image
+      displayName: Clone repository and update YAML
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'Azure para estudiantes(c2b81daf-f6f7-43a0-957b-b330db4beee6)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az aks get-credentials --resource-group ddn-infra-rg --name ddn-infra-aks1
+          kubectl apply -f ecommerce-iac/api-gateway/ecommerce-k8s/ecommerce-admin.yaml
+      displayName: Deploy to AKS
