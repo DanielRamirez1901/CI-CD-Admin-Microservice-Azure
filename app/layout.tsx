@@ -10,7 +10,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Dashboard Administrador',
+  title: 'Dashboard Administrador 2',
   description: 'E-Commerce Dashboard',
 }
 
